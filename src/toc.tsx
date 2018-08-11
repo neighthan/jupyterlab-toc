@@ -1,17 +1,17 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import {ActivityMonitor, PathExt} from '@jupyterlab/coreutils';
+import { ActivityMonitor, PathExt } from '@jupyterlab/coreutils';
 
-import {IDocumentManager} from '@jupyterlab/docmanager';
+import { IDocumentManager } from '@jupyterlab/docmanager';
 
-import {IRenderMimeRegistry} from '@jupyterlab/rendermime';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import {Message} from '@phosphor/messaging';
+import { Message } from '@phosphor/messaging';
 
-import {Widget} from '@phosphor/widgets';
+import { Widget } from '@phosphor/widgets';
 
-import {TableOfContentsRegistry} from './registry';
+import { TableOfContentsRegistry } from './registry';
 
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -72,9 +72,12 @@ export class TableOfContents extends Widget {
     // Throttle the rendering rate of the table of contents.
     this._monitor = new ActivityMonitor({
       signal: context.model.contentChanged,
-      timeout: RENDER_TIMEOUT,
+      timeout: RENDER_TIMEOUT
     });
-    this._monitor.activityStopped.connect(this.update, this);
+    this._monitor.activityStopped.connect(
+      this.update,
+      this
+    );
     this.update();
   }
 
@@ -215,33 +218,36 @@ export class TOCItem extends React.Component<ITOCItemProps, {}> {
    * Render the item.
    */
   render() {
-    const heading = this.props.heading;
-    let level = Math.round(heading.level);
+    const { heading } = this.props;
 
+    let level = Math.round(heading.level);
     // Clamp the header level between 1 and six.
     level = Math.max(Math.min(level, 6), 1);
 
+    const paddingLeft = (level - 1) * 12;
+
     // Create an onClick handler for the TOC item
     // that scrolls the anchor into view.
-    const clickHandler = (evt: MouseEvent) => {
-      evt.preventDefault();
-      evt.stopPropagation();
+    const handleClick = (event: React.SyntheticEvent<HTMLSpanElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
       heading.onClick();
     };
 
+    let content;
+
     if (heading.html) {
-      const el = React.createElement(`h${level}`, {
-        onClick: clickHandler,
-        dangerouslySetInnerHTML: {__html: heading.html},
-      });
-      return <a href="">{el}</a>;
-    } else {
-      return React.createElement(
-        `h${level}`,
-        {onClick: clickHandler},
-        <a href="">{heading.text}</a>,
+      content = (
+        <span
+          dangerouslySetInnerHTML={{ __html: heading.html }}
+          style={{ paddingLeft }}
+        />
       );
+    } else {
+      content = <span style={{ paddingLeft }}>{heading.text}</span>;
     }
+
+    return <li onClick={handleClick}>{content}</li>;
   }
 }
 
@@ -262,10 +268,8 @@ export class TOCTree extends React.Component<ITOCTreeProps, {}> {
     // Return the JSX component.
     return (
       <div className="jp-TableOfContents">
-        <div className="jp-TableOfContents-header">
-          <h1>{this.props.title}</h1>
-        </div>
-        <div className="jp-TableOfContents-content">{listing}</div>
+        <header>{this.props.title}</header>
+        <ul className="jp-TableOfContents-content">{listing}</ul>
       </div>
     );
   }
